@@ -1,23 +1,48 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { format } from "date-fns"
-import { CalendarIcon, Loader2, PlusCircle, BookX, Star } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { format } from "date-fns";
+import { CalendarIcon, Loader2, PlusCircle, BookX, Star } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +50,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,10 +60,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 
-import type { Book, BookFormData } from "@/types/book"
-import { getBooks, createBook, updateBook, deleteBook } from "@/lib/actions/books"
+import type { Book, BookFormData } from "@/types/book";
+import {
+  getBooks,
+  createBook,
+  updateBook,
+  deleteBook,
+} from "@/lib/actions/books";
 
 const bookFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -53,15 +83,15 @@ const bookFormSchema = z.object({
   isbn: z.string().optional(),
   pageCount: z.number().positive().optional().nullable(),
   genre: z.string().optional(),
-})
+});
 
 export default function BookshelfPage() {
-  const [books, setBooks] = useState<Book[]>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [isFormDialogOpen, setIsFormDialogOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState("all")
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
 
   const form = useForm<z.infer<typeof bookFormSchema>>({
     resolver: zodResolver(bookFormSchema),
@@ -79,26 +109,26 @@ export default function BookshelfPage() {
       pageCount: null,
       genre: "",
     },
-  })
+  });
 
   useEffect(() => {
     const loadBooks = async () => {
       try {
-        const data = await getBooks()
-        setBooks(data)
+        const data = await getBooks();
+        setBooks(data);
       } catch (error) {
         toast({
           title: "Error",
           description: "Failed to load books",
           variant: "destructive",
-        })
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    loadBooks()
-  }, [])
+    loadBooks();
+  }, []);
 
   useEffect(() => {
     if (selectedBook) {
@@ -109,13 +139,15 @@ export default function BookshelfPage() {
         status: selectedBook.status as "to-read" | "reading" | "completed",
         rating: selectedBook.rating,
         notes: selectedBook.notes || "",
-        startDate: selectedBook.startDate ? new Date(selectedBook.startDate) : null,
+        startDate: selectedBook.startDate
+          ? new Date(selectedBook.startDate)
+          : null,
         endDate: selectedBook.endDate ? new Date(selectedBook.endDate) : null,
         coverImage: selectedBook.coverImage || "",
         isbn: selectedBook.isbn || "",
         pageCount: selectedBook.pageCount,
         genre: selectedBook.genre || "",
-      })
+      });
     } else {
       form.reset({
         title: "",
@@ -130,101 +162,108 @@ export default function BookshelfPage() {
         isbn: "",
         pageCount: null,
         genre: "",
-      })
+      });
     }
-  }, [selectedBook, form])
+  }, [selectedBook, form]);
 
   const onSubmit = async (data: z.infer<typeof bookFormSchema>) => {
     try {
       if (selectedBook) {
-        await updateBook(selectedBook.id, data as BookFormData)
+        await updateBook(selectedBook.id, data as BookFormData);
         toast({
           title: "Success",
           description: "Book updated successfully",
-        })
+        });
       } else {
-        await createBook(data as BookFormData)
+        await createBook(data as BookFormData);
         toast({
           title: "Success",
           description: "Book added successfully",
-        })
+        });
       }
 
       // Refresh books
-      const updatedBooks = await getBooks()
-      setBooks(updatedBooks)
-      setIsFormDialogOpen(false)
+      const updatedBooks = await getBooks();
+      setBooks(updatedBooks);
+      setIsFormDialogOpen(false);
     } catch (error) {
       toast({
         title: "Error",
-        description: selectedBook ? "Failed to update book" : "Failed to add book",
+        description: selectedBook
+          ? "Failed to update book"
+          : "Failed to add book",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const handleDelete = async () => {
-    if (!selectedBook) return
+    if (!selectedBook) return;
 
     try {
-      await deleteBook(selectedBook.id)
+      await deleteBook(selectedBook.id);
       toast({
         title: "Success",
         description: "Book deleted successfully",
-      })
+      });
 
       // Refresh books
-      const updatedBooks = await getBooks()
-      setBooks(updatedBooks)
-      setIsDeleteDialogOpen(false)
-      setSelectedBook(null)
+      const updatedBooks = await getBooks();
+      setBooks(updatedBooks);
+      setIsDeleteDialogOpen(false);
+      setSelectedBook(null);
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to delete book",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const openAddBookDialog = () => {
-    setSelectedBook(null)
-    setIsFormDialogOpen(true)
-  }
+    setSelectedBook(null);
+    setIsFormDialogOpen(true);
+  };
 
   const openEditBookDialog = (book: Book) => {
-    setSelectedBook(book)
-    setIsFormDialogOpen(true)
-  }
+    setSelectedBook(book);
+    setIsFormDialogOpen(true);
+  };
 
   const openDeleteDialog = (book: Book) => {
-    setSelectedBook(book)
-    setIsDeleteDialogOpen(true)
-  }
+    setSelectedBook(book);
+    setIsDeleteDialogOpen(true);
+  };
 
   const filteredBooks = books.filter((book) => {
-    if (activeTab === "all") return true
-    return book.status === activeTab
-  })
+    if (activeTab === "all") return true;
+    return book.status === activeTab;
+  });
 
   const renderRatingStars = (rating: number | null) => {
-    if (!rating) return null
+    if (!rating) return null;
 
     return (
       <div className="flex items-center">
         {[...Array(5)].map((_, i) => (
-          <Star key={i} className={`h-4 w-4 ${i < rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"}`} />
+          <Star
+            key={i}
+            className={`h-4 w-4 ${
+              i < rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
+            }`}
+          />
         ))}
       </div>
-    )
-  }
+    );
+  };
 
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-4rem)] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
-    )
+    );
   }
 
   return (
@@ -237,11 +276,20 @@ export default function BookshelfPage() {
         </Button>
       </div>
 
-      <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="mb-6">
+      <Tabs
+        defaultValue="all"
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="mb-6"
+      >
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="all">All Books ({books.length})</TabsTrigger>
-          <TabsTrigger value="reading">Reading ({books.filter((b) => b.status === "reading").length})</TabsTrigger>
-          <TabsTrigger value="to-read">To Read ({books.filter((b) => b.status === "to-read").length})</TabsTrigger>
+          <TabsTrigger value="reading">
+            Reading ({books.filter((b) => b.status === "reading").length})
+          </TabsTrigger>
+          <TabsTrigger value="to-read">
+            To Read ({books.filter((b) => b.status === "to-read").length})
+          </TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -255,7 +303,11 @@ export default function BookshelfPage() {
                 ? "You haven't added any books yet."
                 : `You don't have any books in the "${activeTab}" category.`}
             </p>
-            <Button onClick={openAddBookDialog} variant="outline" className="mt-4">
+            <Button
+              onClick={openAddBookDialog}
+              variant="outline"
+              className="mt-4"
+            >
               <PlusCircle className="mr-2 h-4 w-4" />
               Add your first book
             </Button>
@@ -269,14 +321,26 @@ export default function BookshelfPage() {
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="line-clamp-1">{book.title}</CardTitle>
-                    {book.author && <CardDescription className="line-clamp-1">by {book.author}</CardDescription>}
+                    {book.author && (
+                      <CardDescription className="line-clamp-1">
+                        by {book.author}
+                      </CardDescription>
+                    )}
                   </div>
                   <Badge
-                    variant={
-                      book.status === "reading" ? "default" : book.status === "completed" ? "success" : "secondary"
-                    }
+                    variant={`${
+                      book.status === "reading"
+                        ? "default"
+                        : book.status === "completed"
+                        ? "secondary"
+                        : "secondary"
+                    }`}
                   >
-                    {book.status === "to-read" ? "To Read" : book.status === "reading" ? "Reading" : "Completed"}
+                    {book.status === "to-read"
+                      ? "To Read"
+                      : book.status === "reading"
+                      ? "Reading"
+                      : "Completed"}
                   </Badge>
                 </div>
               </CardHeader>
@@ -296,21 +360,37 @@ export default function BookshelfPage() {
                   </Badge>
                 )}
                 {book.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-3 mb-2">{book.description}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-3 mb-2">
+                    {book.description}
+                  </p>
                 )}
-                {book.rating && <div className="mb-2">{renderRatingStars(book.rating)}</div>}
+                {book.rating && (
+                  <div className="mb-2">{renderRatingStars(book.rating)}</div>
+                )}
                 {(book.startDate || book.endDate) && (
                   <div className="text-xs text-muted-foreground">
-                    {book.startDate && <p>Started: {format(new Date(book.startDate), "PP")}</p>}
-                    {book.endDate && <p>Finished: {format(new Date(book.endDate), "PP")}</p>}
+                    {book.startDate && (
+                      <p>Started: {format(new Date(book.startDate), "PP")}</p>
+                    )}
+                    {book.endDate && (
+                      <p>Finished: {format(new Date(book.endDate), "PP")}</p>
+                    )}
                   </div>
                 )}
               </CardContent>
               <CardFooter className="flex justify-between pt-3">
-                <Button variant="outline" size="sm" onClick={() => openEditBookDialog(book)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openEditBookDialog(book)}
+                >
                   Edit
                 </Button>
-                <Button variant="destructive" size="sm" onClick={() => openDeleteDialog(book)}>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => openDeleteDialog(book)}
+                >
                   Delete
                 </Button>
               </CardFooter>
@@ -323,7 +403,9 @@ export default function BookshelfPage() {
       <Dialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{selectedBook ? "Edit Book" : "Add New Book"}</DialogTitle>
+            <DialogTitle>
+              {selectedBook ? "Edit Book" : "Add New Book"}
+            </DialogTitle>
             <DialogDescription>
               {selectedBook
                 ? "Update the details of your book."
@@ -365,7 +447,11 @@ export default function BookshelfPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select status" />
@@ -408,7 +494,11 @@ export default function BookshelfPage() {
                     <FormItem>
                       <FormLabel>Genre</FormLabel>
                       <FormControl>
-                        <Input placeholder="Book genre" {...field} value={field.value || ""} />
+                        <Input
+                          placeholder="Book genre"
+                          {...field}
+                          value={field.value || ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -429,7 +519,11 @@ export default function BookshelfPage() {
                           {...field}
                           value={field.value === null ? "" : field.value}
                           onChange={(e) =>
-                            field.onChange(e.target.value === "" ? null : Number.parseInt(e.target.value))
+                            field.onChange(
+                              e.target.value === ""
+                                ? null
+                                : Number.parseInt(e.target.value)
+                            )
                           }
                         />
                       </FormControl>
@@ -450,9 +544,15 @@ export default function BookshelfPage() {
                           <FormControl>
                             <Button
                               variant={"outline"}
-                              className={`w-full pl-3 text-left font-normal ${!field.value ? "text-muted-foreground" : ""}`}
+                              className={`w-full pl-3 text-left font-normal ${
+                                !field.value ? "text-muted-foreground" : ""
+                              }`}
                             >
-                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                           </FormControl>
@@ -481,9 +581,15 @@ export default function BookshelfPage() {
                           <FormControl>
                             <Button
                               variant={"outline"}
-                              className={`w-full pl-3 text-left font-normal ${!field.value ? "text-muted-foreground" : ""}`}
+                              className={`w-full pl-3 text-left font-normal ${
+                                !field.value ? "text-muted-foreground" : ""
+                              }`}
                             >
-                              {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                              {field.value ? (
+                                format(field.value, "PPP")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
                               <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
                           </FormControl>
@@ -510,7 +616,11 @@ export default function BookshelfPage() {
                     <FormItem>
                       <FormLabel>ISBN</FormLabel>
                       <FormControl>
-                        <Input placeholder="ISBN" {...field} value={field.value || ""} />
+                        <Input
+                          placeholder="ISBN"
+                          {...field}
+                          value={field.value || ""}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -529,7 +639,11 @@ export default function BookshelfPage() {
                           {...field}
                           value={field.value === null ? "" : field.value}
                           onChange={(e) =>
-                            field.onChange(e.target.value === "" ? null : Number.parseInt(e.target.value))
+                            field.onChange(
+                              e.target.value === ""
+                                ? null
+                                : Number.parseInt(e.target.value)
+                            )
                           }
                         />
                       </FormControl>
@@ -545,9 +659,15 @@ export default function BookshelfPage() {
                   <FormItem>
                     <FormLabel>Cover Image URL</FormLabel>
                     <FormControl>
-                      <Input placeholder="URL to book cover" {...field} value={field.value || ""} />
+                      <Input
+                        placeholder="URL to book cover"
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
-                    <FormDescription>Enter a URL to an image of the book cover</FormDescription>
+                    <FormDescription>
+                      Enter a URL to an image of the book cover
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -572,7 +692,9 @@ export default function BookshelfPage() {
               />
               <DialogFooter>
                 <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {form.formState.isSubmitting && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   {selectedBook ? "Update Book" : "Add Book"}
                 </Button>
               </DialogFooter>
@@ -582,12 +704,16 @@ export default function BookshelfPage() {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete {selectedBook?.title}. This action cannot be undone.
+              This will permanently delete {selectedBook?.title}. This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -597,6 +723,5 @@ export default function BookshelfPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }
-

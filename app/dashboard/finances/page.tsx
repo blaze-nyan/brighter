@@ -71,31 +71,7 @@ import {
   deleteTransaction,
   deleteBudget,
 } from "@/lib/actions/finances";
-
-// Transaction type definition
-type Transaction = {
-  id: string;
-  amount: number;
-  type: string;
-  category: string;
-  description: string;
-  date: Date;
-  userId?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
-
-// Budget type definition
-type Budget = {
-  id: string;
-  category: string;
-  amount: number;
-  spent: number;
-  period: string;
-  userId?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
+import type { Transaction, Budget } from "@/types/transaction";
 
 // Transaction categories
 const expenseCategories = [
@@ -955,9 +931,9 @@ export default function FinancesPage() {
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
                       <Calendar
-                        mode="month"
+                        mode="single"
                         selected={selectedMonth}
-                        onSelect={(date) => date && setSelectedMonth(date)}
+                        onSelect={(date: any) => date && setSelectedMonth(date)}
                         initialFocus
                       />
                     </PopoverContent>

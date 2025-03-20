@@ -290,6 +290,9 @@ export default function BookshelfPage() {
           <TabsTrigger value="to-read">
             To Read ({books.filter((b) => b.status === "to-read").length})
           </TabsTrigger>
+          <TabsTrigger value="completed">
+            Completed ({books.filter((b) => b.status === "completed").length})
+          </TabsTrigger>
         </TabsList>
       </Tabs>
 

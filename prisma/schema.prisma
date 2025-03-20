@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,31 +8,30 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
+  id               String            @id @default(cuid())
+  name             String?
+  email            String?           @unique
+  emailVerified    DateTime?
+  image            String?
+  password         String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   accounts         Account[]
-  sessions         Session[]
-  energyLogs       EnergyLog[]
-  pomodoroSessions PomodoroSession[]
-  skills           Skill[]
-  notes            Note[]
-  todos            Todo[]
-  habits           Habit[]
-  habitCompletions HabitCompletion[] // Changed from habitLogs
-  journalEntries   JournalEntry[]
-  goals            Goal[]
-  milestones       Milestone[] // Add this line for Milestone relation
-  tasks            Task[] // Add this line for Task relation
   books            Book[]
-  transactions     Transaction[]
   budgets          Budget[]
+  energyLogs       EnergyLog[]
+  goals            Goal[]
+  habits           Habit[]
+  habitCompletions HabitCompletion[]
+  journalEntries   JournalEntry[]
+  milestones       Milestone[]
+  notes            Note[]
+  pomodoroSessions PomodoroSession[]
+  sessions         Session[]
+  skills           Skill[]
+  tasks            Task[]
+  todos            Todo[]
+  transactions     Transaction[]
 }
 
 model Account {
@@ -44,15 +40,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -82,8 +77,7 @@ model EnergyLog {
   userId      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PomodoroSession {
@@ -95,8 +89,7 @@ model PomodoroSession {
   userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Skill {
@@ -112,21 +105,19 @@ model Skill {
   userId        String
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Note {
   id        String   @id @default(cuid())
   title     String
-  content   String   @db.Text
+  content   String
   category  String?
   tags      String[]
   userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Todo {
@@ -134,30 +125,28 @@ model Todo {
   title       String
   description String?
   completed   Boolean   @default(false)
-  priority    String? // "low", "medium", "high"
+  priority    String?
   category    String?
   dueDate     DateTime?
   userId      String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Habit {
-  id          String   @id @default(cuid())
+  id          String            @id @default(cuid())
   name        String
   description String?
-  frequency   String // "daily", "weekly", "monthly"
+  frequency   String
   category    String?
   color       String?
-  target      Int      @default(1)
+  target      Int               @default(1)
   userId      String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  completions HabitCompletion[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
   user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  completions HabitCompletion[]
 }
 
 model HabitCompletion {
@@ -169,39 +158,36 @@ model HabitCompletion {
   userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  habit Habit @relation(fields: [habitId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model JournalEntry {
   id        String   @id @default(cuid())
   date      DateTime
   title     String?
-  content   String   @db.Text
+  content   String
   mood      String?
   tags      String[]
   userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Goal {
-  id          String    @id @default(cuid())
+  id          String      @id @default(cuid())
   title       String
   description String?
   category    String?
   targetDate  DateTime?
-  completed   Boolean   @default(false)
-  progress    Int       @default(0)
+  completed   Boolean     @default(false)
+  progress    Int         @default(0)
   userId      String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  milestones Milestone[]
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  milestones  Milestone[]
 }
 
 model Milestone {
@@ -214,10 +200,9 @@ model Milestone {
   userId      String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-
-  goal  Goal   @relation(fields: [goalId], references: [id], onDelete: Cascade)
-  tasks Task[]
-  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal        Goal      @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks       Task[]
 }
 
 model Task {
@@ -230,42 +215,41 @@ model Task {
   userId      String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-
-  milestone Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  milestone   Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Book {
-  id         String   @id @default(cuid())
-  title      String
-  author     String?
-  type       String?
-  category   String?
-  status     String // "to-read", "reading", "completed"
-  rating     Int?
-  notes      String?
-  link       String?
-  coverImage String?
-  dateAdded  DateTime @default(now())
-  userId     String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  title       String
+  author      String?
+  description String?
+  status      String
+  rating      Int?
+  notes       String?
+  startDate   DateTime?
+  endDate     DateTime?
+  coverImage  String?
+  isbn        String?
+  pageCount   Int?
+  genre       String?
+  userId      String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Transaction {
   id          String   @id @default(cuid())
   amount      Float
-  type        String // "income" or "expense"
+  type        String
   category    String
   description String?
   date        DateTime
   userId      String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Budget {
@@ -273,10 +257,9 @@ model Budget {
   category  String
   amount    Float
   spent     Float    @default(0)
-  period    String // "monthly" or "yearly"
+  period    String
   userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

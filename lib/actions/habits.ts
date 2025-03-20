@@ -1,165 +1,166 @@
-"use server"
-
-import { revalidatePath } from "next/cache"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import prisma from "@/lib/db"
+import prisma from "@/lib/db";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export async function getHabits() {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id) {
-    throw new Error("You must be logged in to view habits")
+  if (!session || !session.user) {
+    throw new Error("Unauthorized");
   }
 
-  const habits = await prisma.habit.findMany({
+  return prisma.habit.findMany({
     where: {
       userId: session.user.id,
     },
     include: {
-      completions: {
-        orderBy: {
-          date: "desc",
-        },
-      },
+      completions: true,
     },
     orderBy: {
       createdAt: "desc",
     },
-  })
-
-  return habits
+  });
 }
 
-export async function createHabit(data: {
-  name: string
-  description?: string
-  category: string
-  frequency: string
-  color: string
+export async function createHabit({
+  name,
+  description,
+  category,
+  frequency,
+  color,
+}: {
+  name: string;
+  description: string;
+  category: string;
+  frequency: string;
+  color: string;
 }) {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id) {
-    throw new Error("You must be logged in to create a habit")
+  if (!session || !session.user) {
+    throw new Error("Unauthorized");
   }
 
-  const habit = await prisma.habit.create({
+  return prisma.habit.create({
     data: {
-      userId: session.user.id,
-      name: data.name,
-      description: data.description,
-      category: data.category,
-      frequency: data.frequency,
-      color: data.color,
-    },
-  })
-
-  revalidatePath("/dashboard/habits")
-
-  return habit
-}
-
-export async function toggleHabitCompletion(data: {
-  habitId: string
-  date: Date
-  completed: boolean
-  notes?: string
-}) {
-  const session = await getServerSession(authOptions)
-
-  if (!session?.user?.id) {
-    throw new Error("You must be logged in to update a habit")
-  }
-
-  const habit = await prisma.habit.findUnique({
-    where: {
-      id: data.habitId,
-    },
-  })
-
-  if (!habit || habit.userId !== session.user.id) {
-    throw new Error("Habit not found or you don't have permission")
-  }
-
-  // Format date to remove time component for uniqueness constraint
-  const dateOnly = new Date(data.date)
-  dateOnly.setHours(0, 0, 0, 0)
-
-  // Check if completion record exists
-  const existingCompletion = await prisma.habitCompletion.findFirst({
-    where: {
-      habitId: data.habitId,
-      userId: session.user.id,
-      date: {
-        gte: new Date(dateOnly.setHours(0, 0, 0, 0)),
-        lt: new Date(dateOnly.setHours(23, 59, 59, 999)),
+      name,
+      description,
+      category,
+      frequency,
+      color,
+      user: {
+        connect: {
+          id: session.user.id,
+        },
       },
     },
-  })
-
-  if (existingCompletion) {
-    // Update existing completion
-    await prisma.habitCompletion.update({
-      where: {
-        id: existingCompletion.id,
-      },
-      data: {
-        completed: data.completed,
-        notes: data.notes,
-      },
-    })
-  } else {
-    // Create new completion
-    await prisma.habitCompletion.create({
-      data: {
-        habitId: data.habitId,
-        userId: session.user.id,
-        date: dateOnly,
-        completed: data.completed,
-        notes: data.notes,
-      },
-    })
-  }
-
-  revalidatePath("/dashboard/habits")
-
-  return { success: true }
+    include: {
+      completions: true,
+    },
+  });
 }
 
 export async function deleteHabit(habitId: string) {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
-  if (!session?.user?.id) {
-    throw new Error("You must be logged in to delete a habit")
+  if (!session || !session.user) {
+    throw new Error("Unauthorized");
   }
 
-  const habit = await prisma.habit.findUnique({
-    where: {
-      id: habitId,
-    },
-  })
-
-  if (!habit || habit.userId !== session.user.id) {
-    throw new Error("Habit not found or you don't have permission")
-  }
-
-  // Delete all completions first
+  // First, delete all completions related to this habit
   await prisma.habitCompletion.deleteMany({
     where: {
-      habitId: habitId,
+      habitId,
+      userId: session.user.id,
     },
-  })
+  });
 
-  // Then delete the habit
-  await prisma.habit.delete({
+  // Then delete the habit itself
+  return prisma.habit.delete({
     where: {
       id: habitId,
+      userId: session.user.id,
     },
-  })
-
-  revalidatePath("/dashboard/habits")
-
-  return { success: true }
+  });
 }
 
+export async function toggleHabitCompletion(data: {
+  habitId: string;
+  date: string;
+  completed: boolean;
+  notes?: string;
+}) {
+  if (!data || !data.habitId) {
+    throw new Error("Habit ID is required");
+  }
+
+  const session = await getServerSession(authOptions);
+
+  if (!session || !session.user) {
+    throw new Error("Unauthorized");
+  }
+
+  try {
+    // Check if the habit exists and belongs to the user
+    const habit = await prisma.habit.findUnique({
+      where: {
+        id: data.habitId,
+        userId: session.user.id,
+      },
+    });
+
+    if (!habit) {
+      throw new Error("Habit not found or doesn't belong to user");
+    }
+
+    // Check if a completion record already exists for this date
+    const existingCompletion = await prisma.habitCompletion.findFirst({
+      where: {
+        habitId: data.habitId,
+        userId: session.user.id,
+        date: data.date,
+      },
+    });
+
+    let completion;
+
+    if (existingCompletion) {
+      // Update existing completion
+      completion = await prisma.habitCompletion.update({
+        where: {
+          id: existingCompletion.id,
+        },
+        data: {
+          completed: data.completed,
+          notes: data.notes,
+        },
+      });
+    } else {
+      // Create new completion
+      completion = await prisma.habitCompletion.create({
+        data: {
+          habitId: data.habitId,
+          userId: session.user.id,
+          date: data.date,
+          completed: data.completed,
+          notes: data.notes,
+        },
+      });
+    }
+
+    // Get the updated habit with its completions
+    const updatedHabit = await prisma.habit.findUnique({
+      where: {
+        id: data.habitId,
+      },
+      include: {
+        completions: true,
+      },
+    });
+
+    return updatedHabit;
+  } catch (error) {
+    console.error("Error in toggleHabitCompletion:", error);
+    throw error;
+  }
+}

@@ -1,15 +1,15 @@
-"use server"
+"use server";
 
-import { revalidatePath } from "next/cache"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import prisma from "@/lib/db"
+import { revalidatePath } from "next/cache";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import prisma from "@/lib/db";
 
 export async function getGoals() {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    throw new Error("You must be logged in to view goals")
+    throw new Error("You must be logged in to view goals");
   }
 
   const goals = await prisma.goal.findMany({
@@ -26,21 +26,21 @@ export async function getGoals() {
     orderBy: {
       createdAt: "desc",
     },
-  })
+  });
 
-  return goals
+  return goals;
 }
 
 export async function createGoal(data: {
-  title: string
-  description?: string
-  category: string
-  targetDate?: Date
+  title: string;
+  description?: string;
+  category: string;
+  targetDate?: Date;
 }) {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    throw new Error("You must be logged in to create a goal")
+    throw new Error("You must be logged in to create a goal");
   }
 
   const goal = await prisma.goal.create({
@@ -52,33 +52,33 @@ export async function createGoal(data: {
       targetDate: data.targetDate,
       progress: 0,
     },
-  })
+  });
 
-  revalidatePath("/dashboard/goals")
+  revalidatePath("/dashboard/goals");
 
-  return goal
+  return goal;
 }
 
 export async function createMilestone(data: {
-  goalId: string
-  title: string
-  description?: string
-  dueDate?: Date
+  goalId: string;
+  title: string;
+  description?: string;
+  dueDate?: Date;
 }) {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    throw new Error("You must be logged in to create a milestone")
+    throw new Error("You must be logged in to create a milestone");
   }
 
   const goal = await prisma.goal.findUnique({
     where: {
       id: data.goalId,
     },
-  })
+  });
 
   if (!goal || goal.userId !== session.user.id) {
-    throw new Error("Goal not found or you don't have permission")
+    throw new Error("Goal not found or you don't have permission");
   }
 
   const milestone = await prisma.milestone.create({
@@ -89,33 +89,33 @@ export async function createMilestone(data: {
       description: data.description,
       dueDate: data.dueDate,
     },
-  })
+  });
 
-  revalidatePath("/dashboard/goals")
+  revalidatePath("/dashboard/goals");
 
-  return milestone
+  return milestone;
 }
 
 export async function createTask(data: {
-  milestoneId: string
-  title: string
-  description?: string
-  dueDate?: Date
+  milestoneId: string;
+  title: string;
+  description?: string;
+  dueDate?: Date;
 }) {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    throw new Error("You must be logged in to create a task")
+    throw new Error("You must be logged in to create a task");
   }
 
   const milestone = await prisma.milestone.findUnique({
     where: {
       id: data.milestoneId,
     },
-  })
+  });
 
   if (!milestone || milestone.userId !== session.user.id) {
-    throw new Error("Milestone not found or you don't have permission")
+    throw new Error("Milestone not found or you don't have permission");
   }
 
   const task = await prisma.task.create({
@@ -126,18 +126,18 @@ export async function createTask(data: {
       description: data.description,
       dueDate: data.dueDate,
     },
-  })
+  });
 
-  revalidatePath("/dashboard/goals")
+  revalidatePath("/dashboard/goals");
 
-  return task
+  return task;
 }
 
 export async function toggleTaskCompletion(taskId: string) {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    throw new Error("You must be logged in to update a task")
+    throw new Error("You must be logged in to update a task");
   }
 
   const task = await prisma.task.findUnique({
@@ -152,10 +152,10 @@ export async function toggleTaskCompletion(taskId: string) {
         },
       },
     },
-  })
+  });
 
   if (!task || task.userId !== session.user.id) {
-    throw new Error("Task not found or you don't have permission")
+    throw new Error("Task not found or you don't have permission");
   }
 
   // Update task completion status
@@ -166,10 +166,12 @@ export async function toggleTaskCompletion(taskId: string) {
     data: {
       completed: !task.completed,
     },
-  })
+  });
 
   // Check if all tasks in milestone are completed
-  const allTasksCompleted = !task.completed && task.milestone.tasks.every((t) => (t.id === taskId ? true : t.completed))
+  const allTasksCompleted =
+    !task.completed &&
+    task.milestone.tasks.every((t) => (t.id === taskId ? true : t.completed));
 
   if (allTasksCompleted) {
     // Update milestone completion status
@@ -180,19 +182,19 @@ export async function toggleTaskCompletion(taskId: string) {
       data: {
         completed: true,
       },
-    })
+    });
 
     // Update goal progress
-    const goal = task.milestone.goal
+    const goal = task.milestone.goal;
     const milestones = await prisma.milestone.findMany({
       where: {
         goalId: goal.id,
       },
-    })
+    });
 
-    const completedMilestones = milestones.filter((m) => m.completed).length
-    const totalMilestones = milestones.length
-    const progress = Math.round((completedMilestones / totalMilestones) * 100)
+    const completedMilestones = milestones.filter((m) => m.completed).length;
+    const totalMilestones = milestones.length;
+    const progress = Math.round((completedMilestones / totalMilestones) * 100);
 
     await prisma.goal.update({
       where: {
@@ -201,7 +203,7 @@ export async function toggleTaskCompletion(taskId: string) {
       data: {
         progress,
       },
-    })
+    });
   } else if (task.completed && task.milestone.completed) {
     // If a task is being uncompleted and the milestone was completed, uncomplete it
     await prisma.milestone.update({
@@ -211,19 +213,21 @@ export async function toggleTaskCompletion(taskId: string) {
       data: {
         completed: false,
       },
-    })
+    });
 
     // Update goal progress
-    const goal = task.milestone.goal
+    const goal = task.milestone.goal;
     const milestones = await prisma.milestone.findMany({
       where: {
         goalId: goal.id,
       },
-    })
+    });
 
-    const completedMilestones = milestones.filter((m) => (m.id === task.milestone.id ? false : m.completed)).length
-    const totalMilestones = milestones.length
-    const progress = Math.round((completedMilestones / totalMilestones) * 100)
+    const completedMilestones = milestones.filter((m) =>
+      m.id === task.milestone.id ? false : m.completed
+    ).length;
+    const totalMilestones = milestones.length;
+    const progress = Math.round((completedMilestones / totalMilestones) * 100);
 
     await prisma.goal.update({
       where: {
@@ -232,29 +236,29 @@ export async function toggleTaskCompletion(taskId: string) {
       data: {
         progress,
       },
-    })
+    });
   }
 
-  revalidatePath("/dashboard/goals")
+  revalidatePath("/dashboard/goals");
 
-  return updatedTask
+  return updatedTask;
 }
 
 export async function deleteGoal(goalId: string) {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    throw new Error("You must be logged in to delete a goal")
+    throw new Error("You must be logged in to delete a goal");
   }
 
   const goal = await prisma.goal.findUnique({
     where: {
       id: goalId,
     },
-  })
+  });
 
   if (!goal || goal.userId !== session.user.id) {
-    throw new Error("Goal not found or you don't have permission")
+    throw new Error("Goal not found or you don't have permission");
   }
 
   // Delete all related tasks and milestones
@@ -262,39 +266,44 @@ export async function deleteGoal(goalId: string) {
     where: {
       goalId: goalId,
     },
-  })
+  });
 
   for (const milestone of milestones) {
     await prisma.task.deleteMany({
       where: {
         milestoneId: milestone.id,
       },
-    })
+    });
   }
 
   await prisma.milestone.deleteMany({
     where: {
       goalId: goalId,
     },
-  })
+  });
 
   // Delete the goal
   await prisma.goal.delete({
     where: {
       id: goalId,
     },
-  })
+  });
 
-  revalidatePath("/dashboard/goals")
+  revalidatePath("/dashboard/goals");
 
-  return { success: true }
+  return { success: true };
 }
 
-export async function deleteMilestone(milestoneId: string) {
-  const session = await getServerSession(authOptions)
+export async function deleteMilestone({
+  milestoneId,
+}: {
+  milestoneId: string;
+  goalId?: string;
+}) {
+  const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    throw new Error("You must be logged in to delete a milestone")
+    throw new Error("You must be logged in to delete a milestone");
   }
 
   const milestone = await prisma.milestone.findUnique({
@@ -304,10 +313,10 @@ export async function deleteMilestone(milestoneId: string) {
     include: {
       goal: true,
     },
-  })
+  });
 
   if (!milestone || milestone.userId !== session.user.id) {
-    throw new Error("Milestone not found or you don't have permission")
+    throw new Error("Milestone not found or you don't have permission");
   }
 
   // Delete all related tasks
@@ -315,17 +324,17 @@ export async function deleteMilestone(milestoneId: string) {
     where: {
       milestoneId: milestoneId,
     },
-  })
+  });
 
   // Delete the milestone
   await prisma.milestone.delete({
     where: {
       id: milestoneId,
     },
-  })
+  });
 
   // Update goal progress
-  const goal = milestone.goal
+  const goal = milestone.goal;
   const milestones = await prisma.milestone.findMany({
     where: {
       goalId: goal.id,
@@ -333,11 +342,14 @@ export async function deleteMilestone(milestoneId: string) {
         not: milestoneId,
       },
     },
-  })
+  });
 
-  const completedMilestones = milestones.filter((m) => m.completed).length
-  const totalMilestones = milestones.length
-  const progress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0
+  const completedMilestones = milestones.filter((m) => m.completed).length;
+  const totalMilestones = milestones.length;
+  const progress =
+    totalMilestones > 0
+      ? Math.round((completedMilestones / totalMilestones) * 100)
+      : 0;
 
   await prisma.goal.update({
     where: {
@@ -346,18 +358,18 @@ export async function deleteMilestone(milestoneId: string) {
     data: {
       progress,
     },
-  })
+  });
 
-  revalidatePath("/dashboard/goals")
+  revalidatePath("/dashboard/goals");
 
-  return { success: true }
+  return { success: true };
 }
 
 export async function deleteTask(taskId: string) {
-  const session = await getServerSession(authOptions)
+  const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
-    throw new Error("You must be logged in to delete a task")
+    throw new Error("You must be logged in to delete a task");
   }
 
   const task = await prisma.task.findUnique({
@@ -371,10 +383,10 @@ export async function deleteTask(taskId: string) {
         },
       },
     },
-  })
+  });
 
   if (!task || task.userId !== session.user.id) {
-    throw new Error("Task not found or you don't have permission")
+    throw new Error("Task not found or you don't have permission");
   }
 
   // Delete the task
@@ -382,7 +394,7 @@ export async function deleteTask(taskId: string) {
     where: {
       id: taskId,
     },
-  })
+  });
 
   // If the task was completed, we need to check if this affects milestone completion
   if (task.completed && task.milestone.completed) {
@@ -394,9 +406,10 @@ export async function deleteTask(taskId: string) {
           not: taskId,
         },
       },
-    })
+    });
 
-    const allTasksCompleted = remainingTasks.length > 0 && remainingTasks.every((t) => t.completed)
+    const allTasksCompleted =
+      remainingTasks.length > 0 && remainingTasks.every((t) => t.completed);
 
     if (!allTasksCompleted) {
       // Update milestone completion status
@@ -407,19 +420,23 @@ export async function deleteTask(taskId: string) {
         data: {
           completed: false,
         },
-      })
+      });
 
       // Update goal progress
-      const goal = task.milestone.goal
+      const goal = task.milestone.goal;
       const milestones = await prisma.milestone.findMany({
         where: {
           goalId: goal.id,
         },
-      })
+      });
 
-      const completedMilestones = milestones.filter((m) => (m.id === task.milestone.id ? false : m.completed)).length
-      const totalMilestones = milestones.length
-      const progress = Math.round((completedMilestones / totalMilestones) * 100)
+      const completedMilestones = milestones.filter((m) =>
+        m.id === task.milestone.id ? false : m.completed
+      ).length;
+      const totalMilestones = milestones.length;
+      const progress = Math.round(
+        (completedMilestones / totalMilestones) * 100
+      );
 
       await prisma.goal.update({
         where: {
@@ -428,12 +445,11 @@ export async function deleteTask(taskId: string) {
         data: {
           progress,
         },
-      })
+      });
     }
   }
 
-  revalidatePath("/dashboard/goals")
+  revalidatePath("/dashboard/goals");
 
-  return { success: true }
+  return { success: true };
 }
-

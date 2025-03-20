@@ -330,23 +330,17 @@ async function main() {
     {
       title: "Atomic Habits",
       author: "James Clear",
-      type: "physical",
-      category: "Self-Improvement",
       status: "completed",
       rating: 5,
     },
     {
       title: "Deep Work",
       author: "Cal Newport",
-      type: "ebook",
-      category: "Productivity",
       status: "reading",
     },
     {
       title: "The Psychology of Money",
       author: "Morgan Housel",
-      type: "audiobook",
-      category: "Finance",
       status: "to-read",
     },
   ];
@@ -357,8 +351,7 @@ async function main() {
         userId: user.id,
         title: book.title,
         author: book.author,
-        type: book.type,
-        category: book.category,
+
         status: book.status,
         rating: book.rating,
       },

@@ -1,30 +1,52 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { signOut, useSession } from "next-auth/react"
-import { BarChart2, Book, Brain, Calendar, Clock, FileText, Goal, LayoutDashboard, LogOut, Menu, Moon, Music, Settings, Sun, Target, User, Wallet, BookOpen, Repeat, BarChart } from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { useTheme } from "next-themes"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import type React from "react";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
+import {
+  BarChart2,
+  Book,
+  Brain,
+  Calendar,
+  Clock,
+  FileText,
+  Goal,
+  LayoutDashboard,
+  Menu,
+  Moon,
+  Music,
+  Settings,
+  Sun,
+  Target,
+  Wallet,
+  BookOpen,
+  Repeat,
+  BarChart,
+  User,
+  LogOut,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useTheme } from "next-themes";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 
 interface NavItem {
-  title: string
-  href: string
-  icon: React.ElementType
-  category?: string
+  title: string;
+  href: string;
+  icon: React.ElementType;
+  category?: string;
 }
 
 const navItems: NavItem[] = [
@@ -118,7 +140,7 @@ const navItems: NavItem[] = [
     icon: Wallet,
     category: "resources",
   },
-]
+];
 
 const categories = [
   { id: "main", label: "Main" },
@@ -126,40 +148,42 @@ const categories = [
   { id: "development", label: "Development" },
   { id: "wellness", label: "Wellness" },
   { id: "resources", label: "Resources" },
-]
+];
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const pathname = usePathname()
-  const { setTheme, theme } = useTheme()
-  const [open, setOpen] = useState(false)
-  const [activeCategory, setActiveCategory] = useState("main")
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  
+  const pathname = usePathname();
+  const { setTheme, theme } = useTheme();
+  const [open, setOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState("main");
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/login")
+      router.push("/login");
     }
-  }, [status, router])
-  
+  }, [status, router]);
+
   if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
-    )
+    );
   }
 
-  const mainNavItems = navItems.filter((item) => item.category === "main")
-  const categoryNavItems = navItems.filter((item) => item.category === activeCategory && item.category !== "main")
-  
+  const mainNavItems = navItems.filter((item) => item.category === "main");
+  const categoryNavItems = navItems.filter(
+    (item) => item.category === activeCategory && item.category !== "main"
+  );
+
   const handleSignOut = async () => {
-    await signOut({ callbackUrl: "/login" })
-  }
+    await signOut({ callbackUrl: "/login" });
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -168,7 +192,9 @@ export default function DashboardLayout({
           <div className="mr-4 hidden md:flex">
             <Link href="/" className="mr-6 flex items-center space-x-2">
               <Brain className="h-6 w-6" />
-              <span className="hidden font-bold sm:inline-block">ProductivityApp</span>
+              <span className="hidden font-bold sm:inline-block">
+                ProductivityApp
+              </span>
             </Link>
             <nav className="flex items-center space-x-4 text-sm font-medium">
               {mainNavItems.map((item, index) => (
@@ -176,7 +202,9 @@ export default function DashboardLayout({
                   key={index}
                   href={item.href}
                   className={`flex items-center px-3 py-2 rounded-md transition-colors ${
-                    pathname === item.href ? "bg-primary/10 text-primary" : "hover:text-foreground/80"
+                    pathname === item.href
+                      ? "bg-primary/10 text-primary"
+                      : "hover:text-foreground/80"
                   }`}
                 >
                   {item.title}
@@ -203,7 +231,10 @@ export default function DashboardLayout({
                   <DropdownMenuSeparator />
                   {categoryNavItems.map((item, index) => (
                     <DropdownMenuItem key={index} asChild>
-                      <Link href={item.href} className="flex items-center gap-2">
+                      <Link
+                        href={item.href}
+                        className="flex items-center gap-2"
+                      >
                         <item.icon className="h-4 w-4" />
                         {item.title}
                       </Link>
@@ -221,14 +252,20 @@ export default function DashboardLayout({
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="pr-0">
-              <Link href="/" className="flex items-center space-x-2" onClick={() => setOpen(false)}>
+              <Link
+                href="/"
+                className="flex items-center space-x-2"
+                onClick={() => setOpen(false)}
+              >
                 <Brain className="h-6 w-6" />
                 <span className="font-bold">ProductivityApp</span>
               </Link>
               <div className="my-4">
                 {categories.map((category) => (
                   <div key={category.id} className="mb-4">
-                    <h4 className="mb-1 px-2 text-sm font-semibold text-muted-foreground">{category.label}</h4>
+                    <h4 className="mb-1 px-2 text-sm font-semibold text-muted-foreground">
+                      {category.label}
+                    </h4>
                     <div className="flex flex-col space-y-1">
                       {navItems
                         .filter((item) => item.category === category.id)
@@ -257,36 +294,68 @@ export default function DashboardLayout({
             <nav className="flex items-center space-x-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="rounded-full">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="rounded-full"
+                  >
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={session?.user?.image || ""} alt={session?.user?.name || "User"} />
+                      <AvatarImage
+                        src={session?.user?.image || ""}
+                        alt={session?.user?.name || "User"}
+                      />
                       <AvatarFallback>
-                        {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "U"}
+                        {session?.user?.name
+                          ? session.user.name.charAt(0).toUpperCase()
+                          : "U"}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>
-                    {session?.user?.name || "User"}
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {session?.user?.name}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {session?.user?.email}
+                      </p>
+                    </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/profile">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard/settings">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      signOut({
+                        callbackUrl: `${window.location.origin}/login`,
+                      });
+                    }}
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button variant="outline" size="icon" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              >
                 <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                 <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                 <span className="sr-only">Toggle theme</span>
@@ -297,6 +366,5 @@ export default function DashboardLayout({
       </header>
       <div className="container flex-1 py-6">{children}</div>
     </div>
-  )
+  );
 }
-

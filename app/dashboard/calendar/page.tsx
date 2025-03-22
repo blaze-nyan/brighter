@@ -244,7 +244,7 @@ export default function CalendarPage() {
               components={{
                 DayContent: (props) => (
                   <div className="relative">
-                    {props.day ? props.day.toString() : props.date.getDate()}
+                    {props.date.getDate()}
                     {renderCalendarDay(props.date)}
                   </div>
                 ),

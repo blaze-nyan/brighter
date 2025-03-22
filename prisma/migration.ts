@@ -1,22 +1,21 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Running migration to update Book schema...")
+  console.log("Running migration to update schema...");
 
   // This is just a placeholder - in a real scenario, you would run:
-  // npx prisma migrate dev --name add_book_fields
+  // npx prisma migrate dev --name add_user_preferences
 
-  console.log("Migration completed successfully")
+  console.log("Migration completed successfully");
 }
 
 main()
   .catch((e) => {
-    console.error("Migration failed:", e)
-    process.exit(1)
+    console.error("Migration failed:", e);
+    process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect()
-  })
-
+    await prisma.$disconnect();
+  });

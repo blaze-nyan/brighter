@@ -173,7 +173,7 @@ export default function GoalsPage() {
         title: newGoal.title,
         description: newGoal.description || "",
         category: newGoal.category || "personal",
-        targetDate: goalDate ? goalDate.toISOString() : undefined,
+        targetDate: goalDate || undefined,
       });
 
       setGoals((prev) => [...prev, goal]);
@@ -220,7 +220,7 @@ export default function GoalsPage() {
         goalId: selectedGoalId,
         title: newMilestone.title,
         description: newMilestone.description || "",
-        dueDate: milestoneDate ? milestoneDate.toISOString() : undefined,
+        dueDate: milestoneDate || undefined,
       });
 
       setGoals((prev) =>
@@ -228,7 +228,9 @@ export default function GoalsPage() {
           if (goal.id === selectedGoalId) {
             return {
               ...goal,
-              milestones: [...goal.milestones, milestone],
+              milestones: Array.isArray(goal.milestones)
+                ? [...goal.milestones, milestone]
+                : [milestone],
             };
           }
           return goal;
@@ -270,11 +272,10 @@ export default function GoalsPage() {
 
     try {
       const task = await createTask({
-        goalId: selectedGoalId,
         milestoneId: selectedMilestoneId,
         title: newTask.title,
         description: newTask.description || "",
-        dueDate: taskDate ? taskDate.toISOString() : undefined,
+        dueDate: taskDate || undefined,
       });
 
       setGoals((prev) =>

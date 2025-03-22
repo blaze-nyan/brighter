@@ -166,7 +166,31 @@ export default function HabitsClientPage() {
     }
   };
 
-  const handleToggleHabitCompletion = async (habitId, date) => {
+  interface Habit {
+    id: string;
+    name: string;
+    description: string;
+    category: string;
+    frequency: string;
+    color: string;
+    completions?: Completion[];
+  }
+
+  interface Completion {
+    date: string;
+    completed: boolean;
+  }
+
+  interface ToggleHabitCompletionPayload {
+    habitId: string;
+    date: string;
+    completed: boolean;
+  }
+
+  const handleToggleHabitCompletion = async (
+    habitId: string,
+    date: Date
+  ): Promise<void> => {
     if (!habitId) {
       toast({
         title: "Error",
@@ -198,8 +222,10 @@ export default function HabitsClientPage() {
         if (h.id !== habitId) return h;
 
         // Clone the habit and its completions
-        const updatedHabit = { ...h };
-        const updatedCompletions = [...(updatedHabit.completions || [])];
+        const updatedHabit: Habit = { ...h };
+        const updatedCompletions: Completion[] = [
+          ...(updatedHabit.completions || []),
+        ];
 
         // Find existing completion or prepare to add new one
         const existingIndex = updatedCompletions.findIndex(
@@ -228,14 +254,16 @@ export default function HabitsClientPage() {
       setHabits(updatedHabits);
 
       // Call API
+      const payload: ToggleHabitCompletionPayload = {
+        habitId,
+        date: dateStr,
+        completed: newCompletionStatus,
+      };
+
       const response = await fetch("/api/habits/toggle", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          habitId,
-          date: dateStr,
-          completed: newCompletionStatus,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -244,7 +272,7 @@ export default function HabitsClientPage() {
 
       // We don't need to update state again as we already did the optimistic update
       // unless you want to sync with server response
-      const updatedHabit = await response.json();
+      const updatedHabit: Habit = await response.json();
       if (updatedHabit && updatedHabit.id) {
         setHabits((prevHabits) =>
           prevHabits.map((h) => (h.id === habitId ? updatedHabit : h))
@@ -262,7 +290,7 @@ export default function HabitsClientPage() {
       try {
         const response = await fetch("/api/habits");
         if (response.ok) {
-          const refreshedHabits = await response.json();
+          const refreshedHabits: Habit[] = await response.json();
           setHabits(refreshedHabits);
         }
       } catch (refreshError) {
@@ -277,7 +305,7 @@ export default function HabitsClientPage() {
     }
   };
 
-  const handleDeleteHabit = async (habitId) => {
+  const handleDeleteHabit = async (habitId: any) => {
     try {
       const response = await fetch(`/api/habits/${habitId}`, {
         method: "DELETE",
@@ -303,25 +331,27 @@ export default function HabitsClientPage() {
   };
 
   // In client-page.tsx
-  const getCompletionStatus = (habit, date) => {
+  const getCompletionStatus = (habit: Habit, date: string | number | Date) => {
     if (!habit || !habit.completions) return false;
 
     const dateStr = format(date, "yyyy-MM-dd");
 
-    return habit.completions.some((c) => {
+    return habit.completions.some((c: Completion) => {
       // Convert completion date to the same format for comparison
       const completionDateStr = format(new Date(c.date), "yyyy-MM-dd");
       return completionDateStr === dateStr && c.completed;
     });
   };
 
-  const getStreakCount = (habit) => {
+  const getStreakCount = (habit: { completions: any[] }) => {
     let streak = 0;
     let currentDate = new Date();
 
     while (true) {
       const dateStr = format(currentDate, "yyyy-MM-dd");
-      const completion = habit.completions?.find((c) => c.date === dateStr);
+      const completion = habit.completions?.find(
+        (c: { date: string }) => c.date === dateStr
+      );
 
       if (completion && completion.completed) {
         streak++;
@@ -334,7 +364,7 @@ export default function HabitsClientPage() {
     return streak;
   };
   // Calculate the current streak (consecutive days)
-  const getCurrentStreak = (habit) => {
+  const getCurrentStreak = (habit: { completions: any[] }) => {
     let streak = 0;
     let currentDate = new Date();
 
@@ -343,10 +373,12 @@ export default function HabitsClientPage() {
       const dateStr = format(currentDate, "yyyy-MM-dd");
 
       // Find completion for this date
-      const completion = habit.completions?.find((c) => {
-        const completionDateStr = format(new Date(c.date), "yyyy-MM-dd");
-        return completionDateStr === dateStr;
-      });
+      const completion = habit.completions?.find(
+        (c: { date: string | number | Date }) => {
+          const completionDateStr = format(new Date(c.date), "yyyy-MM-dd");
+          return completionDateStr === dateStr;
+        }
+      );
 
       // If no completion or not completed, break the streak
       if (!completion || !completion.completed) {
@@ -361,7 +393,7 @@ export default function HabitsClientPage() {
     return streak;
   };
 
-  const getCompletionRate = (habit) => {
+  const getCompletionRate = (habit: any) => {
     // Get the current streak
     const currentStreak = getCurrentStreak(habit);
 
@@ -375,7 +407,7 @@ export default function HabitsClientPage() {
   };
 
   // Rest of your component code (getCategoryColor, getHabitColor, navigation functions, etc.)
-  const getCategoryColor = (category) => {
+  const getCategoryColor = (category: string | number) => {
     const colors = {
       health: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
       productivity:
@@ -388,10 +420,10 @@ export default function HabitsClientPage() {
         "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
       other: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
     };
-    return colors[category] || colors.other;
+    return colors[category as keyof typeof colors] || colors.other;
   };
 
-  const getHabitColor = (color) => {
+  const getHabitColor = (color: string) => {
     return colors.find((c) => c.value === color)?.class || "bg-blue-500";
   };
 

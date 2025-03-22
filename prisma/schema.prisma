@@ -8,30 +8,58 @@ datasource db {
 }
 
 model User {
-  id               String            @id @default(cuid())
-  name             String?
-  email            String?           @unique
-  emailVerified    DateTime?
-  image            String?
-  password         String?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  accounts         Account[]
-  books            Book[]
-  budgets          Budget[]
-  energyLogs       EnergyLog[]
-  goals            Goal[]
-  habits           Habit[]
-  habitCompletions HabitCompletion[]
-  journalEntries   JournalEntry[]
-  milestones       Milestone[]
-  notes            Note[]
-  pomodoroSessions PomodoroSession[]
-  sessions         Session[]
-  skills           Skill[]
-  tasks            Task[]
-  todos            Todo[]
-  transactions     Transaction[]
+  id                     String                  @id @default(cuid())
+  name                   String?
+  email                  String?                 @unique
+  emailVerified          DateTime?
+  image                  String?
+  password               String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  notificationPreference NotificationPreference?
+  appearancePreference   AppearancePreference?
+  accounts               Account[]
+  books                  Book[]
+  budgets                Budget[]
+  energyLogs             EnergyLog[]
+  goals                  Goal[]
+  habits                 Habit[]
+  habitCompletions       HabitCompletion[]
+  journalEntries         JournalEntry[]
+  milestones             Milestone[]
+  notes                  Note[]
+  pomodoroSessions       PomodoroSession[]
+  sessions               Session[]
+  skills                 Skill[]
+  tasks                  Task[]
+  todos                  Todo[]
+  transactions           Transaction[]
+}
+
+model NotificationPreference {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailNotifications Boolean  @default(true)
+  pushNotifications  Boolean  @default(false)
+  reminderEmails     Boolean  @default(true)
+  weeklyDigest       Boolean  @default(true)
+  goalReminders      Boolean  @default(true)
+  habitReminders     Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model AppearancePreference {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme         String   @default("system")
+  fontSize      String   @default("medium")
+  reducedMotion Boolean  @default(false)
+  highContrast  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Account {

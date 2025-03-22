@@ -613,7 +613,7 @@ export default function AnalyticsPage() {
                         )
                       )
                         .slice(0, 5)
-                        .map((tag: string) => (
+                        .map((tag: any) => (
                           <Badge key={tag}>{tag}</Badge>
                         ))}
 

@@ -194,7 +194,10 @@ export async function toggleTaskCompletion(taskId: string) {
 
     const completedMilestones = milestones.filter((m) => m.completed).length;
     const totalMilestones = milestones.length;
-    const progress = Math.round((completedMilestones / totalMilestones) * 100);
+    const progress =
+      totalMilestones > 0
+        ? Math.round((completedMilestones / totalMilestones) * 100)
+        : 0;
 
     await prisma.goal.update({
       where: {
@@ -365,7 +368,15 @@ export async function deleteMilestone({
   return { success: true };
 }
 
-export async function deleteTask(taskId: string) {
+export async function deleteTask({
+  goalId,
+  milestoneId,
+  taskId,
+}: {
+  goalId: string;
+  milestoneId: string;
+  taskId: string;
+}) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {

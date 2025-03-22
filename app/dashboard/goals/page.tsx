@@ -113,6 +113,14 @@ export default function GoalsPage() {
     const fetchGoals = async () => {
       try {
         const fetchedGoals = await getGoals();
+        console.log("Fetched goals:", fetchedGoals);
+
+        // Check specifically for tasks
+        fetchedGoals.forEach((goal) => {
+          goal.milestones.forEach((milestone) => {
+            console.log(`Milestone ${milestone.id} tasks:`, milestone.tasks);
+          });
+        });
         setGoals(fetchedGoals);
 
         // Expand the first goal by default if there are any
@@ -278,7 +286,9 @@ export default function GoalsPage() {
                 if (milestone.id === selectedMilestoneId) {
                   return {
                     ...milestone,
-                    tasks: [...milestone.tasks, task],
+                    tasks: Array.isArray(milestone.tasks)
+                      ? [...milestone.tasks, task]
+                      : [task],
                   };
                 }
                 return milestone;
@@ -309,26 +319,21 @@ export default function GoalsPage() {
     }
   };
 
+  // In app/dashboard/goals/page.tsx
   const handleToggleTaskCompletion = async (
     goalId: string,
     milestoneId: string,
     taskId: string
   ) => {
     try {
-      const { updatedGoal } = await toggleTaskCompletion({
-        goalId,
-        milestoneId,
-        taskId,
-      });
+      // Add explicit logging to debug the click event
+      console.log("Toggling task completion:", taskId);
 
-      setGoals((prev) =>
-        prev.map((goal) => {
-          if (goal.id === goalId) {
-            return updatedGoal;
-          }
-          return goal;
-        })
-      );
+      await toggleTaskCompletion(taskId);
+
+      // Refresh goals after update
+      const updatedGoals = await getGoals();
+      setGoals(updatedGoals);
     } catch (error) {
       console.error("Error toggling task completion:", error);
       toast({
@@ -969,94 +974,86 @@ export default function GoalsPage() {
                                         </Dialog>
                                       </div>
 
-                                      {milestone.tasks &&
-                                      milestone.tasks.length === 0 ? (
-                                        <div className="text-center py-2 text-xs text-muted-foreground">
-                                          No tasks yet. Add one to get started.
-                                        </div>
-                                      ) : (
-                                        <div className="space-y-2">
-                                          {milestone.tasks &&
-                                          milestone.tasks.lenght > 0
-                                            ? milestone.tasks.map(
-                                                (task: any) => (
-                                                  <div
-                                                    key={task.id}
-                                                    className="flex items-start justify-between rounded border-l-2 border-l-primary/50 bg-muted/50 p-2"
+                                      <div className="space-y-2">
+                                        {milestone.tasks &&
+                                        milestone.tasks.length > 0 ? (
+                                          milestone.tasks.map((task: any) => (
+                                            <div
+                                              key={task.id}
+                                              className="flex items-start justify-between rounded border-l-2 border-l-primary/50 bg-muted/50 p-2"
+                                            >
+                                              <div className="flex items-start gap-2">
+                                                <div className="flex h-5 w-5 items-center justify-center rounded-full hover:bg-muted">
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handleToggleTaskCompletion(
+                                                        goal.id,
+                                                        milestone.id,
+                                                        task.id
+                                                      );
+                                                    }}
+                                                    className={`h-4 w-4 rounded-full border ${
+                                                      task.completed
+                                                        ? "bg-primary border-primary"
+                                                        : "border-muted-foreground"
+                                                    }`}
                                                   >
-                                                    <div className="flex items-start gap-2">
-                                                      <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-5 w-5 rounded-full"
-                                                        onClick={() =>
-                                                          handleToggleTaskCompletion(
-                                                            goal.id,
-                                                            milestone.id,
-                                                            task.id
-                                                          )
-                                                        }
-                                                      >
-                                                        <div
-                                                          className={`h-4 w-4 rounded-full border ${
-                                                            task.completed
-                                                              ? "bg-primary border-primary"
-                                                              : "border-muted-foreground"
-                                                          }`}
-                                                        >
-                                                          {task.completed && (
-                                                            <Check className="h-3 w-3 text-primary-foreground" />
-                                                          )}
-                                                        </div>
-                                                      </Button>
-                                                      <div>
-                                                        <h6
-                                                          className={`text-sm font-medium ${
-                                                            task.completed
-                                                              ? "line-through text-muted-foreground"
-                                                              : ""
-                                                          }`}
-                                                        >
-                                                          {task.title}
-                                                        </h6>
-                                                        {task.description && (
-                                                          <p className="text-xs text-muted-foreground">
-                                                            {task.description}
-                                                          </p>
-                                                        )}
-                                                        {task.dueDate && (
-                                                          <p className="text-xs text-muted-foreground mt-1">
-                                                            Due:{" "}
-                                                            {format(
-                                                              new Date(
-                                                                task.dueDate
-                                                              ),
-                                                              "MMM d, yyyy"
-                                                            )}
-                                                          </p>
-                                                        )}
-                                                      </div>
-                                                    </div>
-                                                    <Button
-                                                      variant="ghost"
-                                                      size="icon"
-                                                      className="h-6 w-6"
-                                                      onClick={() =>
-                                                        handleDeleteTask(
-                                                          goal.id,
-                                                          milestone.id,
-                                                          task.id
-                                                        )
-                                                      }
-                                                    >
-                                                      <Trash2 className="h-3 w-3" />
-                                                    </Button>
-                                                  </div>
-                                                )
-                                              )
-                                            : null}
-                                        </div>
-                                      )}
+                                                    {task.completed && (
+                                                      <Check className="h-3 w-3 text-primary-foreground" />
+                                                    )}
+                                                  </button>
+                                                </div>
+                                                <div>
+                                                  <h6
+                                                    className={`text-sm font-medium ${
+                                                      task.completed
+                                                        ? "line-through text-muted-foreground"
+                                                        : ""
+                                                    }`}
+                                                  >
+                                                    {task.title}
+                                                  </h6>
+                                                  {task.description && (
+                                                    <p className="text-xs text-muted-foreground">
+                                                      {task.description}
+                                                    </p>
+                                                  )}
+                                                  {task.dueDate && (
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                      Due:{" "}
+                                                      {format(
+                                                        new Date(task.dueDate),
+                                                        "MMM d, yyyy"
+                                                      )}
+                                                    </p>
+                                                  )}
+                                                </div>
+                                              </div>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-6 w-6"
+                                                onClick={() =>
+                                                  handleDeleteTask(
+                                                    goal.id,
+                                                    milestone.id,
+                                                    task.id
+                                                  )
+                                                }
+                                              >
+                                                <Trash2 className="h-3 w-3" />
+                                              </Button>
+                                            </div>
+                                          ))
+                                        ) : (
+                                          <div className="text-center py-2 text-xs text-muted-foreground">
+                                            No tasks yet. Add one to get
+                                            started.
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
                                   )}
                                 </div>

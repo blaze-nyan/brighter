@@ -1,16 +1,8 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-
-import { useState } from "react";
-import {
-  format,
-  subDays,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  isSameDay,
-} from "date-fns";
+import { useState, useEffect } from "react";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
 import { Activity, Clock, Target, Repeat } from "lucide-react";
 import {
   Card,
@@ -27,107 +19,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-// Mock data for charts
-const generateMockData = () => {
-  // Energy levels for the past 30 days
-  const energyData = Array.from({ length: 30 }, (_, i) => ({
-    date: subDays(new Date(), 29 - i),
-    value: Math.floor(Math.random() * 50) + 50, // Random value between 50-100
-  }));
-
-  // Pomodoro sessions for the past 30 days
-  const pomodoroData = Array.from({ length: 30 }, (_, i) => ({
-    date: subDays(new Date(), 29 - i),
-    count: Math.floor(Math.random() * 8), // Random count between 0-8
-  }));
-
-  // Skill progress
-  const skillsData = [
-    { name: "JavaScript", progress: 75 },
-    { name: "React", progress: 65 },
-    { name: "Node.js", progress: 45 },
-    { name: "CSS", progress: 80 },
-    { name: "Python", progress: 30 },
-  ];
-
-  // Habit completion for the past 30 days
-  const habitsData = [
-    {
-      name: "Morning Meditation",
-      completions: Array.from({ length: 30 }, (_, i) => ({
-        date: subDays(new Date(), 29 - i),
-        completed: Math.random() > 0.3, // 70% chance of completion
-      })),
-    },
-    {
-      name: "Exercise",
-      completions: Array.from({ length: 30 }, (_, i) => ({
-        date: subDays(new Date(), 29 - i),
-        completed: Math.random() > 0.4, // 60% chance of completion
-      })),
-    },
-    {
-      name: "Reading",
-      completions: Array.from({ length: 30 }, (_, i) => ({
-        date: subDays(new Date(), 29 - i),
-        completed: Math.random() > 0.5, // 50% chance of completion
-      })),
-    },
-  ];
-
-  // Mood data from journal entries
-  const moodData = [
-    { name: "Happy", value: 35 },
-    { name: "Calm", value: 25 },
-    { name: "Productive", value: 20 },
-    { name: "Tired", value: 10 },
-    { name: "Anxious", value: 5 },
-    { name: "Sad", value: 5 },
-  ];
-
-  // Financial data
-  const financialData = {
-    income: Array.from({ length: 6 }, (_, i) => ({
-      month: format(subDays(new Date(), (5 - i) * 30), "MMM"),
-      amount: Math.floor(Math.random() * 2000) + 3000, // Random amount between 3000-5000
-    })),
-    expenses: Array.from({ length: 6 }, (_, i) => ({
-      month: format(subDays(new Date(), (5 - i) * 30), "MMM"),
-      amount: Math.floor(Math.random() * 1500) + 1500, // Random amount between 1500-3000
-    })),
-    categories: [
-      { name: "Housing", value: 35 },
-      { name: "Food", value: 20 },
-      { name: "Transportation", value: 15 },
-      { name: "Entertainment", value: 10 },
-      { name: "Utilities", value: 10 },
-      { name: "Other", value: 10 },
-    ],
-  };
-
-  // Goal progress
-  const goalsData = [
-    { name: "Learn JavaScript", progress: 75, category: "Learning" },
-    { name: "Run a Half Marathon", progress: 40, category: "Health" },
-    { name: "Read 20 Books", progress: 60, category: "Personal" },
-    { name: "Save $10,000", progress: 30, category: "Finance" },
-  ];
-
-  return {
-    energyData,
-    pomodoroData,
-    skillsData,
-    habitsData,
-    moodData,
-    financialData,
-    goalsData,
-  };
-};
+import { getAnalyticsData } from "@/lib/actions/analytics";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState("30days");
-  const [mockData] = useState(generateMockData());
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   // Helper function to get days in current month
   const getDaysInMonth = () => {
@@ -138,42 +37,67 @@ export default function AnalyticsPage() {
 
   const daysInMonth = getDaysInMonth();
 
-  // Calculate habit streak
-  const getStreakCount = (habit: {
-    name: string;
-    completions: { date: Date; completed: boolean }[];
-  }) => {
-    let streak = 0;
-    let currentDate = new Date();
-
-    while (true) {
-      const completion = habit.completions?.find((c) =>
-        isSameDay(c.date, currentDate)
-      );
-
-      if (completion && completion.completed) {
-        streak++;
-        currentDate = subDays(currentDate, 1);
-      } else {
-        break;
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getAnalyticsData(timeRange);
+        setAnalyticsData(data);
+      } catch (error) {
+        console.error("Error fetching analytics data:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load analytics data",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
-    }
+    };
 
-    return streak;
+    fetchData();
+  }, [timeRange, toast]);
+
+  // Calculate habit streak
+  const getStreakCount = (habit: { streak: number }) => {
+    return habit.streak;
   };
 
   // Calculate habit completion rate
-  const getCompletionRate = (habit: {
-    name: string;
-    completions: { date: Date; completed: boolean }[];
-  }) => {
-    const completions = habit.completions.filter(Boolean);
-
-    if (completions.length === 0) return 0;
-
-    const completedCount = completions.filter((c) => c.completed).length;
-    return Math.round((completedCount / completions.length) * 100);
+  const getCompletionRate = (habit: { completionRate: number }) => {
+    return habit.completionRate;
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Analytics Dashboard
+            </h1>
+            <p className="text-muted-foreground">
+              Loading your analytics data...
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="h-4 w-24 bg-muted rounded"></div>
+                <div className="h-4 w-4 bg-muted rounded-full"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 w-16 bg-muted rounded mb-2"></div>
+                <div className="h-3 w-32 bg-muted rounded"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -209,13 +133,11 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {Math.round(
-                mockData.energyData.reduce((acc, curr) => acc + curr.value, 0) /
-                  mockData.energyData.length
-              )}
-              %
+              {analyticsData.stats.averageEnergyLevel}%
             </div>
-            <p className="text-xs text-muted-foreground">+5% from last month</p>
+            <p className="text-xs text-muted-foreground">
+              Based on your energy logs
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -227,9 +149,11 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {mockData.pomodoroData.reduce((acc, curr) => acc + curr.count, 0)}
+              {analyticsData.stats.totalPomodoroSessions}
             </div>
-            <p className="text-xs text-muted-foreground">+12 from last month</p>
+            <p className="text-xs text-muted-foreground">
+              Total sessions in selected period
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -241,15 +165,11 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {Math.round(
-                mockData.habitsData.reduce(
-                  (acc, habit) => acc + getCompletionRate(habit),
-                  0
-                ) / mockData.habitsData.length
-              )}
-              %
+              {analyticsData.stats.averageHabitCompletionRate}%
             </div>
-            <p className="text-xs text-muted-foreground">+8% from last month</p>
+            <p className="text-xs text-muted-foreground">
+              Average across all habits
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -259,16 +179,10 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {Math.round(
-                mockData.goalsData.reduce(
-                  (acc, goal) => acc + goal.progress,
-                  0
-                ) / mockData.goalsData.length
-              )}
-              %
+              {analyticsData.stats.averageGoalProgress}%
             </div>
             <p className="text-xs text-muted-foreground">
-              +15% from last month
+              Average across all goals
             </p>
           </CardContent>
         </Card>
@@ -288,28 +202,28 @@ export default function AnalyticsPage() {
             <Card className="col-span-2">
               <CardHeader>
                 <CardTitle>Energy Levels</CardTitle>
-                <CardDescription>
-                  Your energy levels over the past 30 days
-                </CardDescription>
+                <CardDescription>Your energy levels over time</CardDescription>
               </CardHeader>
               <CardContent className="h-[300px]">
                 <div className="h-full w-full">
                   {/* This would be a real chart component in a production app */}
                   <div className="flex h-full items-end space-x-2">
-                    {mockData.energyData.slice(-14).map((day, i) => (
-                      <div
-                        key={i}
-                        className="relative flex h-full w-full flex-col items-center justify-end"
-                      >
+                    {analyticsData.energyData
+                      .slice(-14)
+                      .map((day: any, i: number) => (
                         <div
-                          className="w-full bg-primary rounded-t"
-                          style={{ height: `${day.value}%` }}
-                        />
-                        <span className="mt-1 text-xs text-muted-foreground">
-                          {format(day.date, "dd")}
-                        </span>
-                      </div>
-                    ))}
+                          key={i}
+                          className="relative flex h-full w-full flex-col items-center justify-end"
+                        >
+                          <div
+                            className="w-full bg-primary rounded-t"
+                            style={{ height: `${day.value}%` }}
+                          />
+                          <span className="mt-1 text-xs text-muted-foreground">
+                            {format(new Date(day.date), "dd")}
+                          </span>
+                        </div>
+                      ))}
                   </div>
                 </div>
               </CardContent>
@@ -321,25 +235,30 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent className="h-[300px]">
                 <div className="h-full w-full">
-                  {/* This would be a real chart component in a production app */}
                   <div className="flex h-full flex-col justify-between">
                     <div className="space-y-2">
                       <div className="flex items-center">
                         <div className="mr-2 h-4 w-4 rounded-full bg-primary" />
                         <span className="text-sm">This Week</span>
                         <span className="ml-auto font-bold">
-                          {mockData.pomodoroData
+                          {analyticsData.pomodoroData
                             .slice(-7)
-                            .reduce((acc, curr) => acc + curr.count, 0)}
+                            .reduce(
+                              (acc: number, curr: any) => acc + curr.count,
+                              0
+                            )}
                         </span>
                       </div>
                       <div className="flex items-center">
                         <div className="mr-2 h-4 w-4 rounded-full bg-muted" />
                         <span className="text-sm">Last Week</span>
                         <span className="ml-auto font-bold">
-                          {mockData.pomodoroData
+                          {analyticsData.pomodoroData
                             .slice(-14, -7)
-                            .reduce((acc, curr) => acc + curr.count, 0)}
+                            .reduce(
+                              (acc: number, curr: any) => acc + curr.count,
+                              0
+                            )}
                         </span>
                       </div>
                       <div className="flex items-center">
@@ -347,31 +266,33 @@ export default function AnalyticsPage() {
                         <span className="text-sm">Average Daily</span>
                         <span className="ml-auto font-bold">
                           {(
-                            mockData.pomodoroData.reduce(
-                              (acc, curr) => acc + curr.count,
+                            analyticsData.pomodoroData.reduce(
+                              (acc: number, curr: any) => acc + curr.count,
                               0
-                            ) / mockData.pomodoroData.length
+                            ) / analyticsData.pomodoroData.length
                           ).toFixed(1)}
                         </span>
                       </div>
                     </div>
                     <div className="flex h-[200px] items-end space-x-2">
-                      {mockData.pomodoroData.slice(-7).map((day, i) => (
-                        <div
-                          key={i}
-                          className="relative flex h-full w-full flex-col items-center justify-end"
-                        >
+                      {analyticsData.pomodoroData
+                        .slice(-7)
+                        .map((day: any, i: number) => (
                           <div
-                            className="w-full bg-primary rounded-t"
-                            style={{
-                              height: `${(day.count / 8) * 100}%`,
-                            }}
-                          />
-                          <span className="mt-1 text-xs text-muted-foreground">
-                            {format(day.date, "EEE")}
-                          </span>
-                        </div>
-                      ))}
+                            key={i}
+                            className="relative flex h-full w-full flex-col items-center justify-end"
+                          >
+                            <div
+                              className="w-full bg-primary rounded-t"
+                              style={{
+                                height: `${(day.count / 8) * 100}%`,
+                              }}
+                            />
+                            <span className="mt-1 text-xs text-muted-foreground">
+                              {format(new Date(day.date), "EEE")}
+                            </span>
+                          </div>
+                        ))}
                     </div>
                   </div>
                 </div>
@@ -386,13 +307,13 @@ export default function AnalyticsPage() {
               <CardHeader>
                 <CardTitle>Habit Completion</CardTitle>
                 <CardDescription>
-                  Your habit consistency over the past month
+                  Your habit consistency over time
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-8">
-                  {mockData.habitsData.map((habit) => (
-                    <div key={habit.name} className="space-y-2">
+                  {analyticsData.habitCompletionRates.map((habit: any) => (
+                    <div key={habit.id} className="space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="space-y-1">
                           <p className="text-sm font-medium leading-none">
@@ -408,28 +329,22 @@ export default function AnalyticsPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex space-x-1">
-                        {daysInMonth.map((day, i) => {
-                          const completion = habit.completions?.find((c) =>
-                            isSameDay(c.date, day)
-                          );
-                          return (
-                            <div
-                              key={i}
-                              className={`h-2 w-2 rounded-sm ${
-                                completion?.completed
-                                  ? "bg-primary"
-                                  : completion
-                                  ? "bg-destructive/50"
-                                  : "bg-muted"
-                              }`}
-                              title={format(day, "MMM d")}
-                            />
-                          );
-                        })}
+                      <div className="h-2 w-full rounded-full bg-muted">
+                        <div
+                          className="h-2 rounded-full bg-primary"
+                          style={{ width: `${getCompletionRate(habit)}%` }}
+                        />
                       </div>
                     </div>
                   ))}
+
+                  {analyticsData.habitCompletionRates.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <p className="text-muted-foreground">
+                        No habits added yet
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -440,70 +355,80 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Best Performing Habit</p>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm">
-                        {
-                          mockData.habitsData.sort(
-                            (a, b) =>
-                              getCompletionRate(b) - getCompletionRate(a)
-                          )[0].name
-                        }
-                      </p>
-                      <p className="text-sm font-bold">
-                        {getCompletionRate(
-                          mockData.habitsData.sort(
-                            (a, b) =>
-                              getCompletionRate(b) - getCompletionRate(a)
-                          )[0]
-                        )}
-                        %
+                  {analyticsData.habitCompletionRates.length > 0 && (
+                    <>
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">
+                          Best Performing Habit
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm">
+                            {analyticsData.habitCompletionRates.sort(
+                              (a: any, b: any) =>
+                                getCompletionRate(b) - getCompletionRate(a)
+                            )[0]?.name || "N/A"}
+                          </p>
+                          <p className="text-sm font-bold">
+                            {getCompletionRate(
+                              analyticsData.habitCompletionRates.sort(
+                                (a: any, b: any) =>
+                                  getCompletionRate(b) - getCompletionRate(a)
+                              )[0]
+                            )}
+                            %
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Longest Streak</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm">
+                            {analyticsData.habitCompletionRates.sort(
+                              (a: any, b: any) =>
+                                getStreakCount(b) - getStreakCount(a)
+                            )[0]?.name || "N/A"}
+                          </p>
+                          <p className="text-sm font-bold">
+                            {getStreakCount(
+                              analyticsData.habitCompletionRates.sort(
+                                (a: any, b: any) =>
+                                  getStreakCount(b) - getStreakCount(a)
+                              )[0]
+                            )}{" "}
+                            days
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Needs Improvement</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm">
+                            {analyticsData.habitCompletionRates.sort(
+                              (a: any, b: any) =>
+                                getCompletionRate(a) - getCompletionRate(b)
+                            )[0]?.name || "N/A"}
+                          </p>
+                          <p className="text-sm font-bold">
+                            {getCompletionRate(
+                              analyticsData.habitCompletionRates.sort(
+                                (a: any, b: any) =>
+                                  getCompletionRate(a) - getCompletionRate(b)
+                              )[0]
+                            )}
+                            %
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {analyticsData.habitCompletionRates.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <p className="text-muted-foreground">
+                        No habits added yet
                       </p>
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Longest Streak</p>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm">
-                        {
-                          mockData.habitsData.sort(
-                            (a, b) => getStreakCount(b) - getStreakCount(a)
-                          )[0].name
-                        }
-                      </p>
-                      <p className="text-sm font-bold">
-                        {getStreakCount(
-                          mockData.habitsData.sort(
-                            (a, b) => getStreakCount(b) - getStreakCount(a)
-                          )[0]
-                        )}{" "}
-                        days
-                      </p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Needs Improvement</p>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm">
-                        {
-                          mockData.habitsData.sort(
-                            (a, b) =>
-                              getCompletionRate(a) - getCompletionRate(b)
-                          )[0].name
-                        }
-                      </p>
-                      <p className="text-sm font-bold">
-                        {getCompletionRate(
-                          mockData.habitsData.sort(
-                            (a, b) =>
-                              getCompletionRate(a) - getCompletionRate(b)
-                          )[0]
-                        )}
-                        %
-                      </p>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -521,8 +446,8 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-8">
-                  {mockData.skillsData.map((skill) => (
-                    <div key={skill.name} className="space-y-2">
+                  {analyticsData.skills.map((skill: any) => (
+                    <div key={skill.id} className="space-y-2">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium leading-none">
                           {skill.name}
@@ -537,6 +462,14 @@ export default function AnalyticsPage() {
                       </div>
                     </div>
                   ))}
+
+                  {analyticsData.skills.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <p className="text-muted-foreground">
+                        No skills added yet
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -554,48 +487,54 @@ export default function AnalyticsPage() {
                       <p className="text-sm font-medium leading-none">
                         Total Learning Hours
                       </p>
-                      <p className="text-3xl font-bold">42.5</p>
-                    </div>
-                    <div className="ml-auto text-sm text-muted-foreground">
-                      +12.5 hrs from last month
+                      <p className="text-3xl font-bold">
+                        {analyticsData.skills
+                          .reduce(
+                            (sum: number, skill: any) =>
+                              sum + (skill.hoursSpent || 0),
+                            0
+                          )
+                          .toFixed(1)}
+                      </p>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="mr-2 h-4 w-4 rounded-full bg-primary" />
-                        <p className="text-sm">JavaScript</p>
+                    {analyticsData.skills
+                      .slice(0, 5)
+                      .map((skill: any, index: number) => (
+                        <div
+                          key={skill.id}
+                          className="flex items-center justify-between"
+                        >
+                          <div className="flex items-center">
+                            <div
+                              className={`mr-2 h-4 w-4 rounded-full ${
+                                index === 0
+                                  ? "bg-primary"
+                                  : index === 1
+                                  ? "bg-blue-500"
+                                  : index === 2
+                                  ? "bg-green-500"
+                                  : index === 3
+                                  ? "bg-purple-500"
+                                  : "bg-yellow-500"
+                              }`}
+                            />
+                            <p className="text-sm">{skill.name}</p>
+                          </div>
+                          <p className="text-sm font-medium">
+                            {skill.hoursSpent?.toFixed(1) || "0"} hrs
+                          </p>
+                        </div>
+                      ))}
+
+                    {analyticsData.skills.length === 0 && (
+                      <div className="flex flex-col items-center justify-center py-6 text-center">
+                        <p className="text-muted-foreground">
+                          No skills added yet
+                        </p>
                       </div>
-                      <p className="text-sm font-medium">15.2 hrs</p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="mr-2 h-4 w-4 rounded-full bg-blue-500" />
-                        <p className="text-sm">React</p>
-                      </div>
-                      <p className="text-sm font-medium">10.8 hrs</p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="mr-2 h-4 w-4 rounded-full bg-green-500" />
-                        <p className="text-sm">Node.js</p>
-                      </div>
-                      <p className="text-sm font-medium">8.5 hrs</p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="mr-2 h-4 w-4 rounded-full bg-purple-500" />
-                        <p className="text-sm">CSS</p>
-                      </div>
-                      <p className="text-sm font-medium">5.0 hrs</p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="mr-2 h-4 w-4 rounded-full bg-yellow-500" />
-                        <p className="text-sm">Python</p>
-                      </div>
-                      <p className="text-sm font-medium">3.0 hrs</p>
-                    </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -617,7 +556,7 @@ export default function AnalyticsPage() {
                   {/* This would be a real chart component in a production app */}
                   <div className="flex h-full items-center justify-center">
                     <div className="grid grid-cols-3 gap-4">
-                      {mockData.moodData.map((mood) => (
+                      {analyticsData.moodData.map((mood: any) => (
                         <div
                           key={mood.name}
                           className="flex flex-col items-center"
@@ -647,27 +586,12 @@ export default function AnalyticsPage() {
               <CardContent>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <p className="text-sm font-medium">Journal Entries</p>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm">This Month</p>
-                      <p className="text-sm font-bold">12</p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm">Last Month</p>
-                      <p className="text-sm font-bold">8</p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm">Average Per Week</p>
-                      <p className="text-sm font-bold">2.8</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
                     <p className="text-sm font-medium">Most Common Moods</p>
                     <div className="space-y-1">
-                      {mockData.moodData
-                        .sort((a, b) => b.value - a.value)
+                      {analyticsData.moodData
+                        .sort((a: any, b: any) => b.value - a.value)
                         .slice(0, 3)
-                        .map((mood) => (
+                        .map((mood: any) => (
                           <div
                             key={mood.name}
                             className="flex items-center justify-between"
@@ -681,11 +605,24 @@ export default function AnalyticsPage() {
                   <div className="space-y-2">
                     <p className="text-sm font-medium">Most Used Tags</p>
                     <div className="flex flex-wrap gap-2">
-                      <Badge>work</Badge>
-                      <Badge>gratitude</Badge>
-                      <Badge>learning</Badge>
-                      <Badge>family</Badge>
-                      <Badge>goals</Badge>
+                      {Array.from(
+                        new Set(
+                          analyticsData.journalEntries?.flatMap(
+                            (entry: any) => entry.tags || []
+                          ) || []
+                        )
+                      )
+                        .slice(0, 5)
+                        .map((tag: string) => (
+                          <Badge key={tag}>{tag}</Badge>
+                        ))}
+
+                      {(!analyticsData.journalEntries ||
+                        analyticsData.journalEntries.length === 0) && (
+                        <p className="text-sm text-muted-foreground">
+                          No journal entries yet
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -707,34 +644,32 @@ export default function AnalyticsPage() {
                 <div className="h-full w-full">
                   {/* This would be a real chart component in a production app */}
                   <div className="flex h-full items-end space-x-6">
-                    {mockData.financialData.income.map((month, i) => (
-                      <div
-                        key={i}
-                        className="flex w-full flex-col items-center space-y-2"
-                      >
-                        <div className="flex w-full flex-col items-center">
-                          <div
-                            className="w-full bg-green-500 rounded-t"
-                            style={{
-                              height: `${(month.amount / 5000) * 200}px`,
-                            }}
-                          />
-                          <div
-                            className="w-full bg-red-500 rounded-b"
-                            style={{
-                              height: `${
-                                (mockData.financialData.expenses[i].amount /
-                                  5000) *
-                                200
-                              }px`,
-                            }}
-                          />
+                    {analyticsData.monthlyFinancialData.map(
+                      (month: any, i: number) => (
+                        <div
+                          key={i}
+                          className="flex w-full flex-col items-center space-y-2"
+                        >
+                          <div className="flex w-full flex-col items-center">
+                            <div
+                              className="w-full bg-green-500 rounded-t"
+                              style={{
+                                height: `${(month.income / 5000) * 200}px`,
+                              }}
+                            />
+                            <div
+                              className="w-full bg-red-500 rounded-b"
+                              style={{
+                                height: `${(month.expenses / 5000) * 200}px`,
+                              }}
+                            />
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {month.month}
+                          </span>
                         </div>
-                        <span className="text-xs text-muted-foreground">
-                          {month.month}
-                        </span>
-                      </div>
-                    ))}
+                      )
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -746,7 +681,7 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockData.financialData.categories.map((category) => (
+                  {analyticsData.expenseCategories.map((category: any) => (
                     <div key={category.name} className="space-y-2">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium">{category.name}</p>
@@ -760,6 +695,14 @@ export default function AnalyticsPage() {
                       </div>
                     </div>
                   ))}
+
+                  {analyticsData.expenseCategories.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <p className="text-muted-foreground">
+                        No transactions added yet
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -770,13 +713,15 @@ export default function AnalyticsPage() {
       <div className="space-y-4">
         <h2 className="text-2xl font-bold tracking-tight">Goal Progress</h2>
         <div className="grid gap-4 md:grid-cols-2">
-          {mockData.goalsData.map((goal) => (
-            <Card key={goal.name}>
+          {analyticsData.goals.map((goal: any) => (
+            <Card key={goal.id}>
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle>{goal.name}</CardTitle>
-                    <CardDescription>{goal.category}</CardDescription>
+                    <CardTitle>{goal.title}</CardTitle>
+                    <CardDescription>
+                      {goal.category || "General"}
+                    </CardDescription>
                   </div>
                   <Badge>{goal.progress}%</Badge>
                 </div>
@@ -791,6 +736,14 @@ export default function AnalyticsPage() {
               </CardContent>
             </Card>
           ))}
+
+          {analyticsData.goals.length === 0 && (
+            <Card className="col-span-2">
+              <CardContent className="flex flex-col items-center justify-center py-6 text-center">
+                <p className="text-muted-foreground">No goals added yet</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>

@@ -1,15 +1,29 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/hooks/use-toast"
-import { format, isSameDay } from "date-fns"
-import { CalendarIcon, Clock, Plus, Tag, X, FileText, Target } from "lucide-react"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { format, isSameDay } from "date-fns";
+import {
+  CalendarIcon,
+  Clock,
+  Plus,
+  Tag,
+  X,
+  FileText,
+  Target,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,24 +32,34 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Event type definition
 type Event = {
-  id: string
-  title: string
-  date: Date
-  startTime?: string
-  endTime?: string
-  description?: string
-  type: "event" | "note" | "task"
-  category?: string
-}
+  id: string;
+  title: string;
+  date: Date;
+  startTime?: string;
+  endTime?: string;
+  description?: string;
+  type: "event" | "note" | "task";
+  category?: string;
+};
 
 // Mock data for events
 const initialEvents: Event[] = [
@@ -75,7 +99,7 @@ const initialEvents: Event[] = [
     type: "task",
     category: "work",
   },
-]
+];
 
 // Event categories with colors
 const eventCategories = [
@@ -85,30 +109,34 @@ const eventCategories = [
   { name: "learning", color: "bg-purple-500" },
   { name: "social", color: "bg-yellow-500" },
   { name: "other", color: "bg-gray-500" },
-]
+];
 
 export default function CalendarPage() {
-  const { toast } = useToast()
-  const [events, setEvents] = useState<Event[]>(initialEvents)
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [newEventOpen, setNewEventOpen] = useState(false)
+  const { toast } = useToast();
+  const [events, setEvents] = useState<Event[]>(initialEvents);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [newEventOpen, setNewEventOpen] = useState(false);
 
   // New event form state
-  const [newEventTitle, setNewEventTitle] = useState("")
-  const [newEventType, setNewEventType] = useState<"event" | "note" | "task">("event")
-  const [newEventStartTime, setNewEventStartTime] = useState("")
-  const [newEventEndTime, setNewEventEndTime] = useState("")
-  const [newEventDescription, setNewEventDescription] = useState("")
-  const [newEventCategory, setNewEventCategory] = useState("work")
+  const [newEventTitle, setNewEventTitle] = useState("");
+  const [newEventType, setNewEventType] = useState<"event" | "note" | "task">(
+    "event"
+  );
+  const [newEventStartTime, setNewEventStartTime] = useState("");
+  const [newEventEndTime, setNewEventEndTime] = useState("");
+  const [newEventDescription, setNewEventDescription] = useState("");
+  const [newEventCategory, setNewEventCategory] = useState("work");
 
   // Get events for selected date
-  const selectedDateEvents = events.filter((event) => isSameDay(event.date, selectedDate))
+  const selectedDateEvents = events.filter((event) =>
+    isSameDay(event.date, selectedDate)
+  );
 
   // Function to get category color
   const getCategoryColor = (categoryName: string) => {
-    const category = eventCategories.find((cat) => cat.name === categoryName)
-    return category ? category.color : "bg-gray-500"
-  }
+    const category = eventCategories.find((cat) => cat.name === categoryName);
+    return category ? category.color : "bg-gray-500";
+  };
 
   // Function to add event
   const handleAddEvent = () => {
@@ -117,8 +145,8 @@ export default function CalendarPage() {
         title: "Error",
         description: "Event title is required",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
 
     const newEvent: Event = {
@@ -128,66 +156,77 @@ export default function CalendarPage() {
       type: newEventType,
       category: newEventCategory,
       description: newEventDescription,
-    }
+    };
 
     if (newEventType === "event") {
-      newEvent.startTime = newEventStartTime
-      newEvent.endTime = newEventEndTime
+      newEvent.startTime = newEventStartTime;
+      newEvent.endTime = newEventEndTime;
     }
 
-    setEvents([...events, newEvent])
-    resetNewEventForm()
-    setNewEventOpen(false)
+    setEvents([...events, newEvent]);
+    resetNewEventForm();
+    setNewEventOpen(false);
 
     toast({
-      title: `${newEventType.charAt(0).toUpperCase() + newEventType.slice(1)} added`,
+      title: `${
+        newEventType.charAt(0).toUpperCase() + newEventType.slice(1)
+      } added`,
       description: `"${newEventTitle}" has been added to your calendar`,
-    })
-  }
+    });
+  };
 
   // Function to delete event
   const handleDeleteEvent = (id: string) => {
-    setEvents(events.filter((event) => event.id !== id))
+    setEvents(events.filter((event) => event.id !== id));
 
     toast({
       title: "Item deleted",
       description: "The item has been removed from your calendar",
-    })
-  }
+    });
+  };
 
   // Reset new event form
   const resetNewEventForm = () => {
-    setNewEventTitle("")
-    setNewEventType("event")
-    setNewEventStartTime("")
-    setNewEventEndTime("")
-    setNewEventDescription("")
-    setNewEventCategory("work")
-  }
+    setNewEventTitle("");
+    setNewEventType("event");
+    setNewEventStartTime("");
+    setNewEventEndTime("");
+    setNewEventDescription("");
+    setNewEventCategory("work");
+  };
 
   // Function to render calendar day with event indicators
   const renderCalendarDay = (day: Date) => {
-    const dayEvents = events.filter((event) => isSameDay(event.date, day))
+    const dayEvents = events.filter((event) => isSameDay(event.date, day));
 
-    if (dayEvents.length === 0) return null
+    if (dayEvents.length === 0) return null;
 
     // Group by category to show colored dots
-    const categories = Array.from(new Set(dayEvents.map((event) => event.category)))
+    const categories = Array.from(
+      new Set(dayEvents.map((event) => event.category))
+    );
 
     return (
       <div className="flex gap-0.5 flex-wrap mt-1 justify-center">
         {categories.map((category, i) => (
-          <div key={i} className={`w-1.5 h-1.5 rounded-full ${getCategoryColor(category || "other")}`} />
+          <div
+            key={i}
+            className={`w-1.5 h-1.5 rounded-full ${getCategoryColor(
+              category || "other"
+            )}`}
+          />
         ))}
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Calendar</h1>
-        <p className="text-muted-foreground">Manage your schedule, events, and notes</p>
+        <p className="text-muted-foreground">
+          Manage your schedule, events, and notes
+        </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-[1fr_300px]">
@@ -205,7 +244,7 @@ export default function CalendarPage() {
               components={{
                 DayContent: (props) => (
                   <div className="relative">
-                    {props.day.toString()}
+                    {props.day ? props.day.toString() : props.date.getDate()}
                     {renderCalendarDay(props.date)}
                   </div>
                 ),
@@ -219,7 +258,9 @@ export default function CalendarPage() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div>
                 <CardTitle>Selected Day</CardTitle>
-                <CardDescription>{format(selectedDate, "MMMM d, yyyy")}</CardDescription>
+                <CardDescription>
+                  {format(selectedDate, "MMMM d, yyyy")}
+                </CardDescription>
               </div>
               <Dialog open={newEventOpen} onOpenChange={setNewEventOpen}>
                 <DialogTrigger asChild>
@@ -230,10 +271,15 @@ export default function CalendarPage() {
                 <DialogContent className="sm:max-w-[550px]">
                   <DialogHeader>
                     <DialogTitle>Add to Calendar</DialogTitle>
-                    <DialogDescription>Add an event, note, or task to your calendar</DialogDescription>
+                    <DialogDescription>
+                      Add an event, note, or task to your calendar
+                    </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
-                    <Tabs defaultValue="event" onValueChange={(value) => setNewEventType(value as any)}>
+                    <Tabs
+                      defaultValue="event"
+                      onValueChange={(value) => setNewEventType(value as any)}
+                    >
                       <TabsList className="grid grid-cols-3">
                         <TabsTrigger value="event">Event</TabsTrigger>
                         <TabsTrigger value="note">Note</TabsTrigger>
@@ -256,7 +302,9 @@ export default function CalendarPage() {
                               id="start-time"
                               type="time"
                               value={newEventStartTime}
-                              onChange={(e) => setNewEventStartTime(e.target.value)}
+                              onChange={(e) =>
+                                setNewEventStartTime(e.target.value)
+                              }
                             />
                           </div>
                           <div className="grid gap-2">
@@ -265,7 +313,9 @@ export default function CalendarPage() {
                               id="end-time"
                               type="time"
                               value={newEventEndTime}
-                              onChange={(e) => setNewEventEndTime(e.target.value)}
+                              onChange={(e) =>
+                                setNewEventEndTime(e.target.value)
+                              }
                             />
                           </div>
                         </div>
@@ -296,16 +346,26 @@ export default function CalendarPage() {
 
                     <div className="grid gap-2">
                       <Label htmlFor="category">Category</Label>
-                      <Select value={newEventCategory} onValueChange={setNewEventCategory}>
+                      <Select
+                        value={newEventCategory}
+                        onValueChange={setNewEventCategory}
+                      >
                         <SelectTrigger id="category">
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                         <SelectContent>
                           {eventCategories.map((category) => (
-                            <SelectItem key={category.name} value={category.name}>
+                            <SelectItem
+                              key={category.name}
+                              value={category.name}
+                            >
                               <div className="flex items-center">
-                                <div className={`w-3 h-3 rounded-full mr-2 ${category.color}`} />
-                                <span className="capitalize">{category.name}</span>
+                                <div
+                                  className={`w-3 h-3 rounded-full mr-2 ${category.color}`}
+                                />
+                                <span className="capitalize">
+                                  {category.name}
+                                </span>
                               </div>
                             </SelectItem>
                           ))}
@@ -314,7 +374,9 @@ export default function CalendarPage() {
                     </div>
 
                     <div className="grid gap-2">
-                      <Label htmlFor="description">Description (Optional)</Label>
+                      <Label htmlFor="description">
+                        Description (Optional)
+                      </Label>
                       <Textarea
                         id="description"
                         value={newEventDescription}
@@ -332,11 +394,13 @@ export default function CalendarPage() {
                             variant="outline"
                             className={cn(
                               "w-full justify-start text-left font-normal",
-                              !selectedDate && "text-muted-foreground",
+                              !selectedDate && "text-muted-foreground"
                             )}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {selectedDate ? format(selectedDate, "PPP") : "Select a date"}
+                            {selectedDate
+                              ? format(selectedDate, "PPP")
+                              : "Select a date"}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">
@@ -362,18 +426,29 @@ export default function CalendarPage() {
                   <div className="flex flex-col items-center text-center">
                     <CalendarIcon className="h-10 w-10 text-muted-foreground" />
                     <h3 className="mt-4 text-lg font-semibold">No items</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">Add an event, note, or task to this day</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Add an event, note, or task to this day
+                    </p>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {selectedDateEvents.map((event) => (
-                    <div key={event.id} className="flex items-start justify-between rounded-lg border p-3">
+                    <div
+                      key={event.id}
+                      className="flex items-start justify-between rounded-lg border p-3"
+                    >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          {event.type === "event" && <Clock className="h-4 w-4 text-blue-500" />}
-                          {event.type === "note" && <FileText className="h-4 w-4 text-green-500" />}
-                          {event.type === "task" && <Target className="h-4 w-4 text-red-500" />}
+                          {event.type === "event" && (
+                            <Clock className="h-4 w-4 text-blue-500" />
+                          )}
+                          {event.type === "note" && (
+                            <FileText className="h-4 w-4 text-green-500" />
+                          )}
+                          {event.type === "task" && (
+                            <Target className="h-4 w-4 text-red-500" />
+                          )}
                           <span className="font-medium">{event.title}</span>
                         </div>
                         {event.startTime && (
@@ -381,13 +456,23 @@ export default function CalendarPage() {
                             {event.startTime} - {event.endTime}
                           </div>
                         )}
-                        {event.description && <p className="text-sm text-muted-foreground">{event.description}</p>}
+                        {event.description && (
+                          <p className="text-sm text-muted-foreground">
+                            {event.description}
+                          </p>
+                        )}
                         <div className="flex items-center gap-2 pt-1">
                           <Tag className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground capitalize">{event.category}</span>
+                          <span className="text-xs text-muted-foreground capitalize">
+                            {event.category}
+                          </span>
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteEvent(event.id)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteEvent(event.id)}
+                      >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
@@ -409,7 +494,10 @@ export default function CalendarPage() {
                   .sort((a, b) => a.date.getTime() - b.date.getTime())
                   .slice(0, 3)
                   .map((event) => (
-                    <div key={event.id} className="flex items-start justify-between rounded-lg border p-3">
+                    <div
+                      key={event.id}
+                      className="flex items-start justify-between rounded-lg border p-3"
+                    >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="capitalize">
@@ -417,7 +505,9 @@ export default function CalendarPage() {
                           </Badge>
                           <span className="font-medium">{event.title}</span>
                         </div>
-                        <div className="text-sm text-muted-foreground">{format(event.date, "MMM d, yyyy")}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {format(event.date, "MMM d, yyyy")}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -427,6 +517,5 @@ export default function CalendarPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

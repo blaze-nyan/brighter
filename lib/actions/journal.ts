@@ -29,12 +29,30 @@ export async function createJournalEntry(data: {
   content: string;
   mood: string;
   tags: string[];
-  date: Date;
+  date: Date | string;
 }) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
     throw new Error("You must be logged in to create a journal entry");
+  }
+
+  // Ensure date is properly formatted
+  let formattedDate;
+  if (data.date instanceof Date) {
+    formattedDate = data.date.toISOString();
+  } else if (typeof data.date === "string") {
+    // If it's already a string, check if it's an ISO string
+    try {
+      // Try to create a Date object and convert back to ISO
+      formattedDate = new Date(data.date).toISOString();
+    } catch (e) {
+      // If that fails, use the current date
+      formattedDate = new Date().toISOString();
+    }
+  } else {
+    // Fallback to current date
+    formattedDate = new Date().toISOString();
   }
 
   const entry = await prisma.journalEntry.create({
@@ -44,7 +62,7 @@ export async function createJournalEntry(data: {
       content: data.content,
       mood: data.mood,
       tags: data.tags,
-      date: data.date.toISOString(),
+      date: formattedDate,
     },
   });
 

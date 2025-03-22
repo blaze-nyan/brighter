@@ -333,20 +333,45 @@ export default function HabitsClientPage() {
 
     return streak;
   };
+  // Calculate the current streak (consecutive days)
+  const getCurrentStreak = (habit) => {
+    let streak = 0;
+    let currentDate = new Date();
+
+    // Go back day by day until we find a day without completion
+    while (true) {
+      const dateStr = format(currentDate, "yyyy-MM-dd");
+
+      // Find completion for this date
+      const completion = habit.completions?.find((c) => {
+        const completionDateStr = format(new Date(c.date), "yyyy-MM-dd");
+        return completionDateStr === dateStr;
+      });
+
+      // If no completion or not completed, break the streak
+      if (!completion || !completion.completed) {
+        break;
+      }
+
+      streak++;
+      // Move to previous day
+      currentDate = subDays(currentDate, 1);
+    }
+
+    return streak;
+  };
 
   const getCompletionRate = (habit) => {
-    const last7Days = Array.from({ length: 7 }, (_, i) =>
-      format(subDays(new Date(), i), "yyyy-MM-dd")
-    );
+    // Get the current streak
+    const currentStreak = getCurrentStreak(habit);
 
-    const completions = last7Days
-      .map((date) => habit.completions?.find((c) => c.date === date))
-      .filter(Boolean);
+    // If streak is 66 days or more, return 100%
+    if (currentStreak >= 66) {
+      return 100;
+    }
 
-    if (completions.length === 0) return 0;
-
-    const completedCount = completions.filter((c) => c.completed).length;
-    return Math.round((completedCount / completions.length) * 100);
+    // Otherwise, calculate the percentage toward our 66-day goal
+    return Math.round((currentStreak / 66) * 100);
   };
 
   // Rest of your component code (getCategoryColor, getHabitColor, navigation functions, etc.)
@@ -613,8 +638,14 @@ export default function HabitsClientPage() {
                               ?.label || habit.category}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
-                            {getStreakCount(habit) > 0
-                              ? `${getStreakCount(habit)} day streak`
+                            {getCurrentStreak(habit) > 0
+                              ? `${getCurrentStreak(habit)} day streak (${
+                                  getCurrentStreak(habit) >= 66
+                                    ? "Habit formed!"
+                                    : `${Math.round(
+                                        (getCurrentStreak(habit) / 66) * 100
+                                      )}% to habit formation`
+                                })`
                               : "No streak"}
                           </span>
                         </div>
